@@ -102,10 +102,11 @@ input,select,textarea{font:inherit;color:inherit}
 /* search */
 .sbarwrap{flex:none;padding:10px 12px 8px;display:flex;flex-direction:column;gap:8px}
 .sbar{height:56px;border-radius:28px;background:var(--surface);display:flex;align-items:center;padding:0 6px 0 4px;gap:2px;position:relative}
-.sbar input{flex:1;border:0;background:none;height:100%;font-size:16px;outline:none;min-width:0}
+.sbar input{flex:1;width:100%;border:0;background:none;height:100%;font-size:16px;outline:none;min-width:0}
 .sbar input::placeholder{color:var(--text2)}
-.ph{position:absolute;left:52px;right:56px;top:0;bottom:0;display:flex;align-items:center;font-size:16px;color:var(--text2);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:opacity .35s}
-.fu-pill{height:36px;border-radius:18px;padding:0 12px;background:#fff;box-shadow:0 1px 2px rgba(60,64,67,.25);display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--primary);margin-right:4px;animation:pop .35s ease-out}
+.sfield{flex:1;min-width:0;height:100%;position:relative;display:flex;align-items:center}
+.ph{position:absolute;inset:0;display:block;line-height:56px;font-size:16px;color:var(--text2);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:opacity .35s}
+.fu-pill{flex:none;height:36px;border-radius:18px;padding:0 12px;background:#fff;box-shadow:0 1px 2px rgba(60,64,67,.25);display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--primary);margin-right:4px;animation:pop .35s ease-out}
 .fu-pill .spark{width:18px;height:18px}
 @keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
 .fucard{border-radius:20px;background:#fff;box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:12px;animation:pop .3s ease-out}
