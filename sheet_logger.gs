@@ -3,7 +3,7 @@
  * Paste into Extensions > Apps Script of a new Google Sheet, set TOKEN, then Deploy > New deployment > Web app
  * (Execute as: Me, Who has access: Anyone). Copy the web app URL into Streamlit secrets as SHEET_WEBHOOK_URL.
  */
-const TOKEN = 'change-me-to-any-secret-word';   // must match SHEET_TOKEN in Streamlit secrets
+const TOKEN = 'mvp-google-photos';   // must match SHEET_TOKEN in Streamlit secrets
 
 const TASK_COLS = ['Updated','Session','Participant','Version','Engine','Task','Cue','Target','Result','Time (s)',
   'Searched (S1)','Queries','Queries with results (S2)','Opened a result (S3)','Found via','Glow shown','Glow tapped',
