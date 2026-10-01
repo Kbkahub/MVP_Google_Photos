@@ -1,0 +1,11 @@
+[theme]
+base = "light"
+backgroundColor = "#e8eaed"
+primaryColor = "#0b57d0"
+
+[client]
+toolbarMode = "minimal"
+showSidebarNavigation = false
+
+[server]
+headless = true
