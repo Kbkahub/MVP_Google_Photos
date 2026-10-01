@@ -33,7 +33,7 @@ const TASKS={
     {id:'A4',cue:'flash',target:'p060'},
     {id:'A5',cue:'story',target:'d01',text:'You need the flight ticket from the beach holiday you took with friends.'}],
  B:[{id:'B1',cue:'flash',target:'p014'},
-    {id:'B2',cue:'fragment',target:'p081',crop:[.25,0,1,.55]},
+    {id:'B2',cue:'fragment',target:'p081',crop:[.18,0,1,.62]},
     {id:'B3',cue:'story',target:'p032',text:'Your friends threw a surprise birthday dinner at night, right by the sea. Everyone was clapping when she walked in.'},
     {id:'B4',cue:'flash',target:'p055'},
     {id:'B5',cue:'story',target:'d07',text:'On your first day at the office, you saved the WiFi password somewhere on your phone.'}]
@@ -239,6 +239,7 @@ function intro(){
 }
 function blockStart(){
   const b=S.blocks[S.bi];
+  TASKS[b.set].forEach(t=>{const p=new Image();p.src=IMG[t.target];});
   show(h('div',{class:'screen study'},
     h('h1',{},MODE_NAME[b.mode]),
     h('p',{},'5 photos to find. Use the app the way you normally would.'),
@@ -257,14 +258,29 @@ function cue(){
     frame=h('div',{class:'frame',style:'align-items:flex-start;background:#fef7e0'},h('div',{class:'story'},task.text));
   }else{
     frame=h('div',{class:'frame'});
-    if(task.cue==='flash'){frame.append(h('img',{src:IMG[it.id],alt:'Photo to remember'}));}
-    else{const c=document.createElement('canvas');const im=new Image();im.onload=()=>{const[x0,y0,x1,y1]=task.crop;const sw=(x1-x0)*im.width,sh=(y1-y0)*im.height;c.width=sw;c.height=sh;c.getContext('2d').drawImage(im,x0*im.width,y0*im.height,sw,sh,0,0,sw,sh);};im.src=IMG[it.id];c.style.cssText='max-width:100%;max-height:100%;filter:blur(1.2px)';c.setAttribute('aria-label','Part of the photo to remember');frame.append(c);}
-    const r=document.createElementNS('http://www.w3.org/2000/svg','svg');r.setAttribute('class','ring');r.setAttribute('viewBox','0 0 44 44');
-    r.innerHTML='<circle class="t" cx="22" cy="22" r="18"/><circle class="p" cx="22" cy="22" r="18" stroke-dasharray="113" stroke-dashoffset="0"/><text x="22" y="27" text-anchor="middle">5</text>';
-    frame.append(r);
-    let left=CUE_SECONDS; const p=r.querySelector('.p'),tx=r.querySelector('text'); const t0=now();
-    const tick=setInterval(()=>{const el=(now()-t0)/1000;p.setAttribute('stroke-dashoffset',String(113*Math.min(1,el/CUE_SECONDS)));tx.textContent=String(Math.max(0,Math.ceil(CUE_SECONDS-el)));
-      if(el>=CUE_SECONDS){clearInterval(tick);frame.innerHTML='';frame.append(h('div',{class:'gone'},task.cue==='flash'?'The photo is hidden now. You remember seeing it.':'That’s all you remember of it.'));go.disabled=false;}},100);
+    const loading=h('div',{class:'gone'},'Loading photo…'); frame.append(loading);
+    const im=new Image();
+    im.onload=()=>{
+      loading.remove();
+      if(task.cue==='flash'){const img=h('img',{src:im.src,alt:'Photo to remember',style:'width:100%;height:100%;object-fit:contain'});frame.append(img);}
+      else{
+        const[x0,y0,x1,y1]=task.crop; const sx=x0*im.naturalWidth, sy=y0*im.naturalHeight, sw=(x1-x0)*im.naturalWidth, sh=(y1-y0)*im.naturalHeight;
+        const scale=Math.max(1,Math.min(4,600/sw)); const c=document.createElement('canvas'); c.width=Math.round(sw*scale); c.height=Math.round(sh*scale);
+        const ctx=c.getContext('2d'); ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high'; ctx.drawImage(im,sx,sy,sw,sh,0,0,c.width,c.height);
+        c.style.cssText='width:100%;height:100%;object-fit:contain;filter:blur(1px)'; c.setAttribute('aria-label','Part of the photo to remember'); frame.append(c);
+      }
+      startRing();
+    };
+    im.onerror=()=>{loading.textContent='Photo could not load. Tap Start finding to continue.';go.disabled=false;};
+    im.src=IMG[it.id];
+    function startRing(){
+      const r=document.createElementNS('http://www.w3.org/2000/svg','svg');r.setAttribute('class','ring');r.setAttribute('viewBox','0 0 44 44');
+      r.innerHTML='<circle class="t" cx="22" cy="22" r="18"/><circle class="p" cx="22" cy="22" r="18" stroke-dasharray="113" stroke-dashoffset="0"/><text x="22" y="27" text-anchor="middle">5</text>';
+      frame.append(r);
+      const p=r.querySelector('.p'),tx=r.querySelector('text'); const t0=now();
+      const tick=setInterval(()=>{const el=(now()-t0)/1000;p.setAttribute('stroke-dashoffset',String(113*Math.min(1,el/CUE_SECONDS)));tx.textContent=String(Math.max(0,Math.ceil(CUE_SECONDS-el)));
+        if(el>=CUE_SECONDS){clearInterval(tick);frame.innerHTML='';frame.append(h('div',{class:'gone'},task.cue==='flash'?'The photo is hidden now. You remember seeing it.':'That’s all you remember of it.'));go.disabled=false;}},100);
+    }
   }
   const lead=task.cue==='flash'?'Remember this photo.':task.cue==='fragment'?'You only remember part of this photo.':'You remember this moment.';
   show(h('div',{class:'screen cue'},meta,h('h2',{},lead),frame,go));
@@ -324,7 +340,7 @@ function taskbar(){
     h('button',{class:'gu hidden',id:'giveup',onclick:e=>{const b=e.currentTarget;if(b.dataset.arm){endTask('gave_up');return;}b.dataset.arm='1';b.textContent='Tap again to give up';setTimeout(()=>{if(b.isConnected){delete b.dataset.arm;b.textContent='Give up';}},3000);}},'Give up'));
 }
 function tile(it,from){
-  const t=h('button',{class:'tile','aria-label':(it.kind==='photo'?'Photo':it.kind[0].toUpperCase()+it.kind.slice(1))+', '+fmtDay(it.date),onclick:()=>openViewer(it,from)},h('img',{src:IMG[it.id],alt:'',loading:'lazy'}));
+  const t=h('button',{class:'tile','aria-label':(it.kind==='photo'?'Photo':it.kind[0].toUpperCase()+it.kind.slice(1))+', '+fmtDay(it.date),onclick:()=>openViewer(it,from)},h('img',{src:IMG[it.id],alt:'',decoding:'async'}));
   if(it.kind==='video')t.append(h('div',{class:'vid'},'0:'+String(it.dur).padStart(2,'0'),svg(I.play,22)));
   return t;
 }
@@ -357,11 +373,13 @@ function onScroll(e){
   const t=now(); if(t-T.scroll.last>1200)T.scroll.bursts++; T.scroll.last=t; T.scroll.dist+=d;
   clearTimeout(scrollLogTimer); scrollLogTimer=setTimeout(()=>log('scroll',{dist:Math.round(T?T.scroll.dist:0),bursts:T?T.scroll.bursts:0}),800);
   // Glow nudge: aimless pattern = scroll, pause, scroll again, over more than ~1.5 screens, without opening search
-  if(T.mode==='M'&&!T.nudge.shown&&!T.events.some(x=>x.type==='search_open')&&T.scroll.bursts>=2&&T.scroll.dist>el.clientHeight*1.5&&(t-T.t0)>5000){
-    T.nudge.shown=true; log('nudge_shown',{dist:Math.round(T.scroll.dist)}); const f=$('#fab'); if(f)f.classList.add('glowing');
-  }
+  if(T.scroll.dist>el.clientHeight*0.8&&(t-T.t0)>3000)maybeGlow('scroll');
 }
 
+function maybeGlow(reason){
+  if(!T||T.mode!=='M'||T.nudge.shown||T.events.some(x=>x.type==='search_open'))return;
+  T.nudge.shown=true; log('nudge_shown',{reason,dist:Math.round(T.scroll.dist)}); const f=$('#fab'); if(f)f.classList.add('glowing');
+}
 /* ---------------- search ---------------- */
 let lastResults=[],lastQuery='',aiState=null,fuShown=false;
 function openSearch(src){
@@ -372,7 +390,7 @@ function openSearch(src){
   const input=h('input',{type:'search',enterkeyhint:'search','aria-label':'Search your photos',autocomplete:'off'});
   const ph=h('div',{class:'ph'},M?PLACEHOLDERS_M[0]:PLACEHOLDER_C);
   const slot=h('div',{id:'fuslot',style:'display:flex'});
-  const bar=h('div',{class:'sbar'},h('button',{class:'iconbtn','aria-label':'Back',onclick:closeSearch},svg(I.back)),input,ph,slot);
+  const bar=h('div',{class:'sbar'},h('button',{class:'iconbtn','aria-label':'Back',onclick:closeSearch},svg(I.back)),h('div',{class:'sfield'},input,ph),slot);
   const sw=h('div',{class:'sbarwrap'},bar,h('div',{id:'fucard'}));
   const res=h('div',{class:'scroller',id:'results'});
   layer.append(sw,h('div',{class:'ai-line',id:'ailine'}),res);
@@ -410,7 +428,9 @@ async function runQuery(q,via,opts={}){
     if(myQ!==lastQuery||!$('#search'))return;
     line.innerHTML='';
     if(r){aiState=r;
-      if(r.items.length){lastResults=r.items;renderResults(r.items);line.append('Improved with AI');}
+      if(r.items.length){const seen=new Set(r.items.map(x=>x.id));const merged=r.items.concat(lastResults.filter(x=>!seen.has(x.id))).slice(0,36);
+        const same=merged.length===lastResults.length&&merged.every((x,i)=>x===lastResults[i]);
+        lastResults=merged; if(!same)renderResults(merged); line.append('Improved with AI');}
       log('ai_results',{q,n:r.items.length,top:r.items.slice(0,5).map(x=>x.id),hasTarget:T?r.items.some(x=>x.id===T.target):undefined,question:r.question});
     } else log('ai_unavailable');
   }
@@ -455,7 +475,7 @@ function openViewer(it,from){
   log('photo_open',{id:it.id,from,correct:T?it.id===T.target:undefined});
   clearTimeout(fuTimer);
   const v=h('div',{class:'layer viewer',id:'viewer'});
-  const top=h('div',{class:'vtop'},h('button',{class:'iconbtn','aria-label':'Back',onclick:()=>{v.remove();log('photo_close',{id:it.id});if($('#search')&&T&&T.mode==='M')armFollowup(5000);}},svg(I.back)),
+  const top=h('div',{class:'vtop'},h('button',{class:'iconbtn','aria-label':'Back',onclick:()=>{v.remove();log('photo_close',{id:it.id});if($('#search')&&T&&T.mode==='M')armFollowup(5000);else if(from==='grid')maybeGlow('opened_photo');}},svg(I.back)),
     h('div',{class:'vtitle'},fmtDay(it.date),h('small',{},it.place||'')),
     h('button',{class:'iconbtn','aria-label':'Share',onclick:inactive('share')},svg(I.share)));
   const img=h('div',{class:'vimg'},h('img',{src:IMG[it.id],alt:it.desc}));
