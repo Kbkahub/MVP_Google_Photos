@@ -129,12 +129,15 @@ Reply with a JSON object only:
 
 def log_session(session):
     if not SHEET_URL:
+        print("SHEET LOG: no SHEET_WEBHOOK_URL secret found", flush=True)
         return {"ok": False, "error": "no_sheet"}
     try:
         r = requests.post(SHEET_URL, data=json.dumps({"token": SHEET_TOKEN, "session": session}),
                           headers={"Content-Type": "text/plain"}, timeout=15)
-        return {"ok": r.ok}
+        print("SHEET LOG:", r.status_code, r.text[:300], flush=True)
+        return {"ok": r.ok and '"ok":true' in r.text}
     except Exception as e:
+        print("SHEET LOG ERROR:", repr(e), flush=True)
         return {"ok": False, "error": type(e).__name__}
 
 
@@ -148,10 +151,9 @@ if msg and msg.get("reqId") != st.session_state.get("handled"):
     if kind == "ai":
         out = ask_groq(payload.get("q", ""))
         if not out.get("ok"):
-            print("Groq error:", out.get("error"))
+            print("Groq error:", out.get("error"), flush=True)
     elif kind == "log":
         out = log_session(payload)
-        print("SHEET LOG:", out)
     else:
         out = {"ok": False, "error": "unknown"}
     out["reqId"] = msg["reqId"]
