@@ -151,6 +151,7 @@ if msg and msg.get("reqId") != st.session_state.get("handled"):
             print("Groq error:", out.get("error"))
     elif kind == "log":
         out = log_session(payload)
+        print("SHEET LOG:", out)
     else:
         out = {"ok": False, "error": "unknown"}
     out["reqId"] = msg["reqId"]
